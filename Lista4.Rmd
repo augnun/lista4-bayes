@@ -1,0 +1,77 @@
+---
+title: "Lista 4 - Inferência Bayesiana"
+author: "Augusto Cesar Ribeiro Nunes - 13/0103004"
+output: html_notebook
+---
+
+# Questão 1
+
+Considere os dados obtidos sobre o tempo de resistência (em horas) de 15 filmes isolantes.Suponha que o tempo de resistência desses filmes isolantes segue uma distribuição Weibull(2,$\theta$), cuja densidade é dada por $f(x|\theta) = 2\theta x e^{-\theta x^2}$ com $x>0$ e $\theta > 0$
+
+```{r dados questao 1}
+dados.1 <- c(2.1, 2.5, 3.4, 3.5, 4.9, 6.2, 7.5, 7.7, 8.0, 8.9, 8.9, 9.5, 11.2, 15.1, 17.6)
+```
+
+
+## Item (i)
+Considerando uma _priori_ difusa (não-informativa) para $\theta$, isto é, $\theta \sim \Gamma(10^{-3}, 10^{-3})$, encontre a estimativa pontual de $\theta$ (média a _posteriori_) e seu respectivo intervalo HPD de 95%.
+
+```{r q1.item1}
+log.vm.weibull <- function(alpha, theta, dados, n){
+  n*log(theta) + n*log(alpha) + sum(log(dados)) - alpha*sum(dados^2)
+}
+
+
+```
+
+
+## Item (ii)
+
+Considerando a priori do item (i), qual é a probabilidade preditiva de um novo filme isolante resistir (sobreviver) por mais de 10 horas?
+
+## Item (iii)
+
+Qual é o intervalo HPD de 95% de credibilidade para a probabilidade preditiva estimada no item 
+(ii)?
+
+# Questão 2
+
+Considere que no segundo turno de uma eleição presidencial os eleitores poderão somente ou votar no Candidato A ou votar no Candidato B (vamos desconsiderar aqui a possibilidade do eleitor votar em branco ou anular seu voto). Em uma pesquisa de intenção de votos, uma amostra aleatória de n=1000 eleitores foram entrevistados e x=520 disseram que votarão no Candidato A (consequentemente, 480 votarão no candidato B).
+
+Seja $\theta$ um parâmetro que representa o (verdadeiro) percentual de eleitores que votarão no Candidato A. Assuma que a população é grande o suficiente (população infinita) para que a amostra dos eleitores, dado $\theta$, seja independente. Considerando que nenhum eleitor entrevistado mudará a sua opinião e que, a priori, $\theta \sim Uniforme(0,1)$. Obtenha:
+
+## Item (i)
+
+a estimativa pontual (a posteriori) de $\theta$ e seu respectivo intervalo HPD de 95%;
+
+## Item (ii)
+
+a probabilidade do Candidato A ganhar a eleição.
+
+## Item (iii)
+
+calcule o valor-e (do FBST) da hipótese $H_0: \theta=0.5$ vs $H_1: \theta \neq0.5$.
+
+## Item (iv)
+
+(antes de realizar a pesquisa eleitoral) qual deve ser o número mínimo de eleitores que devemos entrevistar para que seja possível estimar a proporção de votos do Candidato A e que, com uma probabilidade de 95%, essa estimativa não erre o verdadeiro valor por mais de 0.03? Para o cálculo, assuma que, a priori, $\theta \sim Uniforme(0,1)$.
+
+# Questão 3
+
+Suponha que o número de carros vendidos em uma concessionária segue
+
+uma distribuição Poisson com média $\theta$. Acompanhando o número de vendas em 10 dias foram
+
+observados os seguintes valores: 2; 4; 1; 0; 0; 3; 0; 1; 2; 2. Considerando, a priori, que $\theta \sim Gama(0,2 ; 0,1)$.
+
+## Item (i)
+
+qual a probabilidade preditiva dessa concessionária não vender carro algum em 1 dia?
+
+## Item (ii)
+
+qual a probabilidade dessa concessionária vender no máximo 4 carros em uma semana? (considere 6 dias de funcionamento);
+
+## Item (iii)
+
+obtenha o intervalo simétrico e HPD de 95% de credibilidade para os itens (i) e (ii).
