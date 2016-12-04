@@ -1,0 +1,230 @@
+---
+title: "Lista 4 - Inferência Bayesiana"
+author: "Augusto Cesar Ribeiro Nunes - 13/0103004"
+output: html_notebook
+---
+
+# Questão 1
+
+> Considere os dados obtidos sobre o tempo de resistência (em horas) de 15 filmes isolantes.Suponha que o tempo de resistência desses filmes isolantes segue uma distribuição Weibull(2,$\theta$), cuja densidade é dada por $f(x|\theta) = 2\theta x e^{-\theta x^2}$ com $x>0$ e $\theta > 0$
+
+```{r dados questao 1}
+dados.1 <- c(2.1, 2.5, 3.4, 3.5, 4.9, 6.2, 7.5, 7.7, 8.0, 8.9, 8.9, 9.5, 11.2, 15.1, 17.6)
+length(dados.1)
+sum(dados.1)
+sum(dados.1^2)
+```
+
+
+## Item (i)
+> Considerando uma _priori_ difusa (não-informativa) para $\theta$, isto é, $\theta \sim \Gamma(10^{-3}, 10^{-3})$, encontre a estimativa pontual de $\theta$ (média a _posteriori_) e seu respectivo intervalo HPD de 95%.
+
+Podemos encontrar analiticamente a distribuição a _posteriori_ a partir da priori difusa $\theta \sim \Gamma(10^{-3}, 10^{-3})$ utilizando a Fórmula de Bayes reduzida e achando seu núcleo. Tomando n = 15, $\sum x_i = 117$ e $\sum x_i^2 = 1188,34$, temos
+
+* __Verossimilhança__: $L(\theta|\boldsymbol{x}) \propto \theta^n e^{-\theta\sum_{i=1}^15 x_i^2} = \theta^{15} e^{-\theta 1184,34}$
+
+* _Priori_: $\pi(\theta) \propto \theta^{0,001 - 1}e^{-0,001\theta}$
+
+Portanto, como a _posteriori_ é proporcional ao produto entre a verossimilhança e a _priori_, temos:
+
+$$p(\theta|\boldsymbol{x}) \propto \theta^n e^{-\theta\sum_{i=1}^{15} x_i^2}\theta^{0,001 - 1}e^{-0,001\theta} \\ \propto \theta^{0,001 + 15 - 1}e^{-\theta(\sum_{i=1}^{15} 1188,34^2 + 0,001)}$$
+
+Substituindo com os val o lado direito da _posteriori_ corresponde ao núcleo de uma distribuição Gamma com $\alpha = 15,001$ e $\beta = 1188,341$. Portanto, a distribuição a _posteriori_ é dada por $\theta|\boldsymbol{x} \sim Gamma(\alpha = 15,001, \beta = 1188,341)$, e então a estimativa pontual de $\theta$, a esperança a _posteriori_ de $\theta$, é dada por 
+
+```{r questao 1 item i}
+# média a posteriori
+15.001/1188.341
+
+# # distribuição a priori
+# x = seq(0,1, by=0.0001)
+# y = dgamma(x, 10^-3, 10^-3)
+# plot(x,y,  lty = 2, col = 2)
+# # Curva da distribuição a posteriori
+# y.pos = dgamma(dados.1, 15.001, 1188.341)
+# lines(y.pos)
+```
+
+
+$$\hat{\theta} = E_{\theta|\boldsymbol{x}} (\theta) = \frac{15,001}{1188,341} =  0,01262348$$
+O intervalo HPD (_Highest Posterior Density_) $(0,006578652; 0,019094621)$ é obtido numericamente, utilizando o pacote `TeachingDemos` do R:
+
+```{r questao 1 item i hpd}
+require(TeachingDemos)
+theta<-rgamma(10000000,shape=15.001,rate=1188.341)
+emp.hpd(theta,conf=.95)
+```
+```{r questao 1 item i grafico}
+
+```
+
+
+
+## Item (ii)
+
+> Considerando a priori do item (i), qual é a probabilidade preditiva de um novo filme isolante resistir (sobreviver) por mais de 10 horas?
+
+### Analiticamente
+
+$P(x>10) = 1 - \int_{0}^{10}2\theta x e^{-\theta x^2}dx = 1 - \int_{0}^{100} \theta e^{-\theta u}du = 1 - (1 - e^{-100\theta}) = e^{-100\theta}$
+
+Como a distribuição preditiva é dada pela esperança a _posteriori_ de $P(x>10)$, temos
+
+$$E_{\theta|\boldsymbol{x}}(e^{-100\theta}) = \int_{0}^{+\infty} \frac{1188,341^{15,001}}{\Gamma(15,001)}\theta^{15,001 - 1}e^{-\theta(1188,341)}e^{-100\theta}d\theta \\ = \left(\frac{1188,341}{1288,341}\right)^{15,001} = 0,2975903$$
+```{r questao i item ii}
+(1188.341/1288.341)^{15.001}
+```
+
+Portanto, a probabilidade de um novo filme isolante sobreviver a mais de 10 horas é aproximadamente $0,2975903$.
+
+
+## Item (iii)
+
+> Qual é o intervalo HPD de 95% de credibilidade para a probabilidade preditiva estimada no item (ii)?
+
+```{r questao i item iii}
+emp.hpd(exp(-100*theta),conf=.95)
+
+```
+
+O Intervalo HPD para a probabilidade de um novo filme isolante sobreviver a mais de 10 horas é igual a $(0,1278875; 0,4789315)$. 
+
+
+# Questão 2
+
+> Considere que no segundo turno de uma eleição presidencial os eleitores poderão somente ou votar no Candidato A ou votar no Candidato B (vamos desconsiderar aqui a possibilidade do eleitor votar em branco ou anular seu voto). Em uma pesquisa de intenção de votos, uma amostra aleatória de n=1000 eleitores foram entrevistados e x=520 disseram que votarão no Candidato A (consequentemente, 480 votarão no candidato B).
+
+> Seja $\theta$ um parâmetro que representa o (verdadeiro) percentual de eleitores que votarão no Candidato A. Assuma que a população é grande o suficiente (população infinita) para que a amostra dos eleitores, dado $\theta$, seja independente. Considerando que nenhum eleitor entrevistado mudará a sua opinião e que, a priori, $\theta \sim Uniforme(0,1)$. Obtenha:
+
+## Item (i)
+
+> A estimativa pontual (a posteriori) de $\theta$ e seu respectivo intervalo HPD de 95%;
+
+Aqui podemos novamente encontrar a distribuição a _posteriori_ considerando o produto entre a verossimilhança e o núcleo da _priori_, como feito na Questão 1, item (i). De fato:
+
+* __Verossimilhança__: $L(\theta|\boldsymbol{x}) \propto \theta^{520}(1-\theta)^{480}$
+
+* _priori_: $\pi(\theta) \propto 1$
+
+então
+
+$$p(\theta|\boldsymbol{x}) \propto \theta^{520}(1-\theta)^{480} 1$$
+Note que o lado direito é o núcleo de uma distribuição Beta com $\alpha = 521$, $\beta = 481$. Logo, a distribuição a _posteriori_ é $\theta|\boldsymbol{x} \sim Beta(\alpha = 521, \beta = 481)$, e a estimativa pontual de $\theta$ é:
+
+$$E_{\theta|\boldsymbol{x}}(\theta) = 521/1002 = 0,5199601$$
+```{r questao 2 item i}
+# Média a posteriori de theta
+521/(521+481)
+```
+
+
+## Item (ii)
+
+> A probabilidade do Candidato A ganhar a eleição.
+
+
+```{r questao 2 item ii}
+1 -pbeta(0.5, 521,481)
+```
+
+O Candidato A ganha a eleição com probabilidade $\approx 0,8969463$
+
+## Item (iii)
+
+> Calcule o valor-e (do FBST) da hipótese $H_0: \theta=0.5$ vs $H_1: \theta \neq0.5$.
+
+```{r questao 2 item iii}
+theta3<-rbeta(1000000,521,481)
+f_post<-dbeta(theta3,521,481)
+f_post_h0<-dbeta(0.5,521,481)
+e.valor<-1-sum(f_post>f_post_h0)/1000000
+e.valor
+
+for(k in 1:1000){  #resposta = 2k
+thetam<-rbeta(1000000,k+1,k+1)
+print(emp.hpd(thetam,conf=.95)[2]-emp.hpd(thetam,conf=.95)[1])
+print(k)
+}
+```
+
+
+## Item (iv)
+
+(antes de realizar a pesquisa eleitoral) qual deve ser o número mínimo de eleitores que devemos entrevistar para que seja possível estimar a proporção de votos do Candidato A e que, com uma probabilidade de 95%, essa estimativa não erre o verdadeiro valor por mais de 0.03? Para o cálculo, assuma que, a priori, $\theta \sim Uniforme(0,1)$.
+
+# Questão 3
+
+> Suponha que o número de carros vendidos em uma concessionária segue uma distribuição Poisson com média $\theta$. Acompanhando o número de vendas em 10 dias foram observados os seguintes valores: 2; 4; 1; 0; 0; 3; 0; 1; 2; 2. Considerando, a priori, que $\theta \sim Gama(0,2 ; 0,1)$.
+
+```{r questao 3 dados}
+dados.3 <- c(2,4,1,0,0,3,0,1,2,2)
+sum(dados.3)
+sum(dados.3^2)
+length(dados.3)
+```
+
+
+## Item (i)
+
+> Qual a probabilidade preditiva dessa concessionária não vender carro algum em 1 dia?
+
+* __Verossimilhança__: $L(\theta|\boldsymbol{x}) \propto e^{-n\theta}\theta^{\sum_{i=1}^n x_i}$
+
+* _priori_: $\pi(\theta) \propto \theta^{\alpha - 1}e^{\beta\theta}$
+
+Então
+
+$$p(\theta|\boldsymbol{x}) \propto e^{-n\theta}\theta^{\sum_{i=1}^n x_i}\theta^{\alpha - 1}e^{\beta\theta} \\
+\propto \theta^{\sum_{i=1}^n x_i + \alpha - 1}e^{-\theta(\beta + n)}$$
+
+A expressão à direita corresponde ao núcleo de uma distribuição Gamma com parâmetro de forma $\sum_{i=1}^n x_i + \alpha)$ e parâmetro de taxa $\beta + n$. Considerando que temos $n = 10$, $\sum_{i=1}^{10} x_i = 15$ e os parâmetros $\alpha = 0,2$ e $\beta = 0,1$ da _priori_, temos a _posteriori_ $\theta|\boldsymbol{x} \sim Gamma(15,2;10,1)$. Como a verossimilhança é Poisson, a probabilidade da concessionária não vender nenhum carro é a probabilidade a _posteriori_ de $e^{-\theta}, dada por:
+
+$$E_{\theta|\boldsymbol{x}}(e^{-\theta}) = \int_0^{+\infty}\frac{\beta^{\alpha}}{\Gamma(\alpha)}\theta^{\alpha - 1}e^{-\beta\theta}e^{-\theta}d\theta = \\ \left(\frac{\beta}{\beta+1}\right)^{\alpha}\\
+=\left(\frac{10,1}{11,1}\right)^{15,2} = 0,2381$$
+
+Portanto, a probabilidade preditiva desta concessionária não vender nenhum carro durante uma semana é de aproximadamente $0,2381$.
+
+## Item (ii)
+
+> Qual a probabilidade dessa concessionária vender no máximo 4 carros em uma semana? (considere 6 dias de funcionamento);
+
+### Analiticamente
+Ao considerarmos que a verossimilhança é Poisson, e que as vendas ocorrem de maneira independente e identicamente distribuídas, podemos deduzir que a distribuição do número de carros vendidos dá-se por uma soma de 6 distribuições Poisson com parâmetro $\theta$, ou seja, tem distribuição $X_n \sim Poisson(6\theta)$ é a variável aleatória correspondente. Portanto
+
+$$P(X_n \leq 4 | \sum_{i=1}^{10}x_i) = \sum_{k = 0}^{4} E_{\theta|\boldsymbol{x}}\left[\frac{e^{-6\theta}(6\theta)^k}{k!}\right] = \\
+\sum_{k=0}^4\int_0^{+\infty}\left[\frac{e^{-6\theta}(6\theta)^k}{k!}\right]\frac{\beta^{\alpha}}{\Gamma(\alpha)}\theta^{\alpha -1}e^{-\beta\theta}d\theta = \\
+\sum_{k=0}^4\frac{\beta^{\alpha}}{\Gamma(\alpha)}\frac{6^k}{k!}\int_0^{+\infty}\theta^{\alpha + k - 1}e^{-\theta(\beta + 6)}d\theta \\
+=\sum_{k=0}^4\frac{\beta^{\alpha}}{\Gamma(\alpha)}\frac{6^k}{k!}\frac{\Gamma(\alpha + k)}{\beta + 6}^{\alpha + k} \\
+= \sum_{k=0}^4\left(\frac{10,1}{11,1}\right)^{15,2} \frac{1}{\Gamma(15,2)}\left(\frac{6}{16,1}\right)^k\frac{15,2 + k}{k!} = 0,102136$$
+
+```{r questao 3 item ii analitica}
+q3.item3.analitica<-function(k){
+  
+  ((10.1/16.1)^15.2*(6/16.1)^k*gamma(15.2+k))/(gamma(15.2)*factorial(k))
+  
+}
+
+sum(q3.item3.analitica(0:4))
+
+```
+
+
+### Usando simulação
+```{r questao 3 item ii simulando}
+theta.q3.item2 <- rgamma(1000000,15.2,10.1)
+
+q3.item3.simul <-function(k){
+  (exp(-6*theta.q3.item2)*(6*theta.q3.item2)^k)/factorial(k)
+}
+
+mean(q3.item3.simul(0)) + mean(q3.item3.simul(1)) + mean(q3.item3.simul(2)) + mean(q3.item3.simul(3)) + mean(q3.item3.simul(4))
+```
+
+
+## Item (iii)
+
+> Obtenha o intervalo simétrico e HPD de 95% de credibilidade para os itens (i) e (ii).
+
+```{r}
+curve(dgamma(x, 15.2,10.1))
+```
+
