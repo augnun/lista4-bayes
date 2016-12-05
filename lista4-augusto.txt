@@ -1,0 +1,155 @@
+# Código-fonte lista 4 - Inferência Bayesiana
+# Augusto Cesar Ribeiro Nunes - 13/0103004
+
+
+
+###############################################################################
+# Questão 1
+
+
+dados.1 <- c(2.1, 2.5, 3.4, 3.5, 4.9, 6.2, 7.5, 7.7, 8.0, 8.9, 8.9, 9.5, 11.2, 15.1, 17.6)
+length(dados.1)
+sum(dados.1)
+sum(dados.1^2)
+
+###############################################################################
+# Questão 1 - item (i)
+theta <- seq(0.00001, 0.03, 0.000001) # Vetor de 29991 elementos, diminuir tamanho caso execução lenta do laço for() a seguir
+posteriori <- vector()
+
+for(i in 1:length(theta)){
+  posteriori[i] <-
+    prod(2 * theta[i] * dados.1 * exp(-theta[i] * dados.1 ^ 2)) * dgamma((theta[i]), shape =
+    1e-3,
+    rate = 1e-3)
+}
+
+sum(theta*posteriori/sum(posteriori)) # Média a posteriori
+
+plot(theta, posteriori, main = "Densidade da distribuição a posteriori",
+     xlab = expression(theta))
+
+# média a posteriori
+15.001/1188.341
+
+
+require(TeachingDemos)
+hpd(qgamma,shape=15+10^-3,rate=1188.34+10^-3)
+plot(theta,dgamma(theta,shape=15+10^-3,rate=1188.34+10^-3),type='l',
+     main = "Densidade a posteriori \n com Intervalo HPD de 95%",
+     ylab = "Distribuição a Posteriori",
+     xlab = expression(theta))
+abline(v=c(0.006612998,0.019124927), col="blue")
+
+###############################################################################
+# Questão 1 - item (ii)
+mean(exp(-100*rgamma(100000, 15+10^-3, 1188.34+10^-3))) # Função preditiva como média a posteriori de exp{-100}
+
+
+(1188.341/1288.341)^{15.001}
+
+###############################################################################
+# Questão 1 - item (iii)
+emp.hpd(exp(-100*rgamma(100000, 15+10^-3, 1188.34+10^-3)))
+
+
+
+
+
+###############################################################################
+# Questão 2 - item (i)
+theta<-seq(0,1,0.000001) # length(theta) = 1000001
+
+posteriori<-vector(length = length(theta))
+
+for(i in 1:length(theta)){
+  posteriori[i]=dbinom(520,1000,theta[i])*1 # Voto no Candidato A = Sucesso
+}
+
+plot(theta,posteriori, main = "Distribuição a posteriori", xlab = expression(theta), ylab = "Posteriori")
+sum((theta*posteriori/sum(posteriori))) # média posteriori
+
+
+hpd(qbeta, shape1=521, shape2=481) # Utilizando a propriedade de conjugação beta-binomial
+plot(theta,dbeta(theta,shape1=521, shape2=481),type='l', main = "Distribuição a posteriori \n com Intervalo HPD de 95%", ylab = "Posteriori", xlab = expression(theta))
+abline(v=c(0.4890368,0.5508611), col="red")
+
+# Média a posteriori de theta
+521/(521+481)
+
+###############################################################################
+# Questão 2 - item (ii)
+1-pbeta(0.5,shape1=521,shape2=481)
+
+###############################################################################
+# Questão 2 - item (iii)
+n <- 100000000
+theta <- rbeta(n, 521, 481)
+f_post <- dbeta(theta, 521, 481)
+f_post_h0 <- dbeta(0.5, 521, 481)
+e.valor <- mean(f_post < f_post_h0)
+e.valor
+
+
+###############################################################################
+# Questão 2 - item (iv)
+
+(qnorm(.975)/.06)^2
+
+###############################################################################
+# Questão 3 - item (i)
+
+dados.3 <- c(2,4,1,0,0,3,0,1,2,2)
+sum(dados.3)
+sum(dados.3^2)
+length(dados.3)
+
+mean(exp(-rgamma(100000, 15.2, 10.1)))
+
+(10.1/11.1)^15.2
+
+
+###############################################################################
+# Questão 3 - item (ii)
+theta<-rgamma(10000000, 15.2, 10.1)
+p<-vector(length = length(theta))
+for(i in 1:5){
+  p[i]=mean(exp(-6*theta)*(6*theta)^(i-1)/factorial(i-1))
+}
+sum(p)
+
+
+q3.item2.analitica<-function(k){
+
+  ((10.1/16.1)^15.2*(6/16.1)^k*gamma(15.2+k))/(gamma(15.2)*factorial(k))
+
+}
+
+sum(q3.item2.analitica(0:4))
+
+###############################################################################
+# Questão 3 - item (iii)
+theta<-rgamma(10000, 15.2, 10.1) # tamanho de theta reduzido dada a ineficiência das funções hpd
+
+
+emp.hpd(exp(-theta))
+
+emp.hpd((exp(-6*theta))+(exp(-6*theta)*(6*theta))+
+          ((exp(-6*theta)*(6*theta)^2)/2)+((exp(-6*theta)*(6*theta)^3)/6)+
+          ((exp(-6*theta)*(6*theta)^4)/24))
+
+p<-vector()
+d<-vector()
+for(j in 1:length(theta)){
+for(i in 1:5){
+  p[i]=(exp(-6*theta[j])*(6*theta[j])^(i-1)/factorial(i-1))
+}
+  d[j]=sum(p)
+}
+emp.hpd(d,conf=.95)
+plot(density(d), "Densidade Kernel da posteriori", xlab = expression(theta))
+abline(v=c( 2.429959e-05, 3.423880e-01), col="red")
+
+
+crit <- qgamma(c(0.05 / 2, 1 - 0.05 / 2), shape = 10, rate = 10)
+crit/mean(dados.3)
